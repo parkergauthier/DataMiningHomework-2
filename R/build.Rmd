@@ -1,0 +1,15 @@
+---
+title: "Data Mining Homework 2"
+author: "Parker Gauthier"
+date: "2/28/2022"
+output: md_document
+---
+
+## 1.) Problem 1: visualization
+```{r include=FALSE}
+#Reading in the Data
+capmetro = read.csv(here("data/capmetro_UT.csv"))
+```
+
+```{r include=FALSE}
+
