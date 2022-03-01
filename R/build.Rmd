@@ -58,6 +58,7 @@ capmetro %>%
       plot.title = element_text(size=20),
       legend.title=element_text(size = 15),
       legend.text=element_text(size=12),
+      legend.position = "bottom",
       text = element_text(size=8.5))
 ```
   Our next figure above depicts the relationship between the number of boardings and temperature.  As indicated in the graph, each point represents the number of boardings in a 15-minute interval, and the plots are faceted by the hour of the day.  Again, we can see that demand is much greater during the week than on the weekends, consistent with our first figure.  More importantly, we can see that there is no apparent relationship between temperature and the number of boardings in the day.  Boardings appear to be affected more by the time of the day, not how hot or cold it is outside.
@@ -65,3 +66,51 @@ capmetro %>%
   
 
 ## 2.) Saratoga House Prices
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+#Dividing the Data
+saratoga_split = initial_split(SaratogaHouses, prop = 0.8) 
+saratoga_train = training(saratoga_split) 
+saratoga_test = testing(saratoga_split) 
+
+#Building a linear model
+lm_ = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train)
+
+rmse_ = foreach(i = 1:100, .combine='c') %do% {
+  saratoga_split_best = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_train_best = training(saratoga_split_best) 
+  saratoga_test_best = testing(saratoga_split_best)
+  modelr::rmse(lm_, data=saratoga_test_best)
+} %>%
+  mean()
+
+#Buidling a KNN model
+## constructing the feature matrices
+xtrain = model.matrix(~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + livingArea + heating - 1, data = saratoga_train)
+xtest = model.matrix(~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + livingArea + heating - 1, data = saratoga_test)
+
+#train/test responces
+ytrain = saratoga_train$price
+ytest = saratoga_test$price
+
+#rescaling
+scale_train = apply(xtrain, 2, sd)
+xtilde_train = scale(xtrain, scale = scale_train)
+xtilde_test = scale(xtest, scale = scale_train)
+
+#Running KNN
+knn_ = knnreg(ytrain~xtilde_train, data = saratoga_train, k = 15)
+
+rmse(knn_, saratoga_test)
+
+rmse_knn = foreach(i = 1:100, .combine='c') %do% {
+  saratoga_splity = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_trainy = training(saratoga_splity) 
+  saratoga_testy = testing(saratoga_splity)
+  knn_besty = knnreg(ytrain~xtilde_train, data = saratoga_trainy, k = 10)
+  modelr::rmse(knn_besty, data=saratoga_test)
+} %>%
+  mean()
+```
+
+

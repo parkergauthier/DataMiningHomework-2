@@ -20,7 +20,12 @@ librarian::shelf(
   mosaic,
   dplyr,
   esquisse,
-  plotly
+  plotly,
+  modelr,
+  rsample,
+  caret,
+  foreach,
+  parallel
 )
 
 here::i_am("R/include.R")
