@@ -10,6 +10,58 @@ output: md_document
 #Reading in the Data
 capmetro = read.csv(here("data/capmetro_UT.csv"))
 ```
+### Bus Boardings vs Time
+```{r Average Boardings by Hour (1), echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
-```{r include=FALSE}
+capmetro = mutate(capmetro,
+               day_of_week = factor(day_of_week,
+                 levels=c("Mon", "Tue", "Wed","Thu", "Fri", "Sat", "Sun")),
+               month = factor(month,
+                 levels=c("Sep", "Oct","Nov")))
 
+capmetro %>% 
+  group_by(day_of_week, hour_of_day, month) %>% 
+  summarize(mean = mean(boarding)) %>% 
+  ggplot(aes(x = hour_of_day, y = mean, color = month)) +
+  geom_line(size=1.1, alpha = .6)+
+  facet_wrap(~day_of_week) +
+  labs(title = "Capital Metro's Bus Boardings", 
+       subtitle = "How do  Boarding Averages Vary by Time-of-Day, Month, and Day of the Week?", 
+       x = "Hour of the Day", 
+       y = "Average Boardings", 
+       color = "Month:") +
+  theme_economist() +
+  scale_color_brewer(palette = "Set1")
+  
+```
+  The figure above gives us some useful insights into the demand for Capital Metro's public bus line at different points in time.  Perhaps the most obvious takeaway is that demand is significantly less on the weekends than on the weekdays, with Saturday's and Sunday's demand being quite meager compared to that of Monday-Friday.  Moreover, peak demand on Monday through Friday is similar from day to day, having a steady increase from the morning hours until the evening rush-hour where demand begins to decline. This could suggest that most people riding the bus in Austin are using it to get to and from work since demand coincides with typical working hours. Another explanation for larger demand later in the day could be that people are using the bus for recreational activities after they clock-out from work.
+    Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of certain businesses being closed on Mondays, therefore there are less things for people to do during this time.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of colder temperatures keeping people from going out or perhaps they are utilizing warmer, private methods of travel on these days.  This could hint that people are more tolerant of colder weather on Monday and Tuesday as these days are a fresh start after the weekend.
+    
+    
+### Bus Boardings vs Temperature
+```{r Boardings vs Temp (1), echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+capmetro %>%
+  mutate(isWeekend = ifelse(day_of_week == "Sat" | day_of_week == "Sun", yes = TRUE, no = FALSE)) %>% 
+  ggplot(aes(x=temperature, y= boarding, color=isWeekend)) +
+  geom_point(alpha = .4) +
+  facet_wrap(~hour_of_day) +
+  labs(x = "Temperature (Degrees Fahrenheit)", 
+       y = "Number of People Boarding", 
+       title = "How Does Temperature Affect the Number of Boardings?", 
+       caption = "**Each point represents the number of boardings in one 15-minute interval",
+       color = "Weekday vs Weekend:") +
+  scale_color_brewer(palette = "Set1", 
+                     labels = c("Weekday", "Weekend")) +
+  theme_wsj() +
+  theme(axis.title = element_text(size = 20),
+      plot.title = element_text(size=20),
+      legend.title=element_text(size = 15),
+      legend.text=element_text(size=12),
+      text = element_text(size=8.5))
+```
+  Our next figure above depicts the relationship between the number of boardings and temperature.  As indicated in the graph, each point represents the number of boardings in a 15-minute interval, and the plots are faceted by the hour of the day.  Again, we can see that demand is much greater during the week than on the weekends, consistent with our first figure.  More importantly, we can see that there is no apparent relationship between temperature and the number of boardings in the day.  Boardings appear to be affected more by the time of the day, not how hot or cold it is outside.
+  
+  
+
+## 2.) Saratoga House Prices
