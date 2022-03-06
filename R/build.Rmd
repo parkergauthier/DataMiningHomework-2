@@ -5,7 +5,7 @@ date: "2/28/2022"
 output: md_document
 ---
 
-## 1.) Problem 1: visualization
+## 1.) Visualization
 ```{r include=FALSE}
 #Reading in the Data
 capmetro = read.csv(here("data/capmetro_UT.csv"))
@@ -67,50 +67,253 @@ capmetro %>%
 
 ## 2.) Saratoga House Prices
 
+  There are several ways to build an optimal pricing model, but depending on the data we are analyzing, some strategies may prove to be better than others. The analysis below aims to compare the performance of an optimized linear model to a K-nearest neighbors (KNN) model.  This will be done by separating data from Saratoga housing prices into a training set for building our model and a testing set for assessing our model's out-of-sample performance.  We will then build the best linear model we can and see how it stacks up to KNN.
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-#Dividing the Data
+#Dividing the Data into an intital train and test split
 saratoga_split = initial_split(SaratogaHouses, prop = 0.8) 
 saratoga_train = training(saratoga_split) 
 saratoga_test = testing(saratoga_split) 
+```
+  Lets begin by calculating the out-of-sample, Root Mean Squared Error (RMSE) for three different linear models.  The first will be "built by hand" as the coefficients will be selected based off arbitrary assumptions, made by yours truly, of their ability to predict price.  These coefficients will include age of the home, land value, bedrooms, and bathrooms among others and some interaction effects.  The second will be built using a forward selection method of building the model from the bottom up.  The last will be built using stepwise selection with our 'hand-built' model as our starting point. Finally, to ensure the validity of the best performing model, we will loop through this process 30 times and calculate the average RMSE for each.
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
-#Building a linear model
-lm_ = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train)
 
-rmse_ = foreach(i = 1:100, .combine='c') %do% {
-  saratoga_split_best = initial_split(SaratogaHouses, prop = 0.8) 
-  saratoga_train_best = training(saratoga_split_best) 
-  saratoga_test_best = testing(saratoga_split_best)
-  modelr::rmse(lm_, data=saratoga_test_best)
+###################BUILDING A LINEAR MODEL#################  
+
+
+##This will be our baseline.  It is an improved model relative to the medium model we used in class.  We will use this as a start to stepwise selection
+lm_ = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train)
+
+### We will begin by using forward selection (we will skip backwards selection).
+lm0 = lm(price~1, data = saratoga_train)
+lm_forward = step(lm0, 
+                  direction = 'forward',
+                  scope =~ (age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + pctCollege + fuel + sewer + newConstruction + waterfront)^2)
+
+
+#### Now we will use stepwise selection
+lm_step = step(lm_,
+               scope=~(.)^2)
+
+```
+*The average RMSE for our 'hand-build' model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+rmse_og = foreach(i = 1:30, .combine='c') %do% {
+  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_train_loop = training(saratoga_split_loop) 
+  saratoga_test_loop = testing(saratoga_split_loop)
+  lm_loop = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train_loop)
+  modelr::rmse(lm_loop, data=saratoga_test_loop)
 } %>%
-  mean()
+  mean() %>%
+  round(2)
 
-#Buidling a KNN model
+rmse_og
+```
+*Average RMSE for our forward selection model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+rmse_forward = foreach(i = 1:30, .combine='c') %do% {
+  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_train_loop = training(saratoga_split_loop) 
+  saratoga_test_loop = testing(saratoga_split_loop)
+  lm0_loop = lm(price~1, data = saratoga_train_loop)
+lm_forward_loop = step(lm0, 
+                  direction = 'forward',
+                  scope =~ (age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + pctCollege + fuel + sewer + newConstruction + waterfront)^2)
+  modelr::rmse(lm_forward_loop, data=saratoga_test_loop)
+} %>%
+  mean() %>% 
+  round(2)
+
+rmse_forward
+
+```
+*Average RMSE for our stepwise selection model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+rmse_step = foreach(i = 1:30, .combine='c') %do% {
+  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_train_loop = training(saratoga_split_loop) 
+  saratoga_test_loop = testing(saratoga_split_loop)
+  lm_step_loop = step(lm_,
+               scope=~(.)^2)
+  modelr::rmse(lm_step_loop, data=saratoga_test_loop)
+} %>%
+  mean() %>% 
+  round(2)
+
+rmse_step
+```
+
+We can see that the linear model that tends to minimize our RMSE is our forward-section model.  We will use this to compare to our KNN model.
+
+For our KNN model, we will optimize k  and will initiate a similar loop to determine the average out-of-sample performance of our model.
+
+*The RMSE for the KNN model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+
+##########################BUILDING A KNN MODEL#####################
+
+
 ## constructing the feature matrices
-xtrain = model.matrix(~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + livingArea + heating - 1, data = saratoga_train)
-xtest = model.matrix(~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + livingArea + heating - 1, data = saratoga_test)
+xtrain = model.matrix(~ . - 1, data = saratoga_train)
+xtest = model.matrix(~ .- 1, data = saratoga_test)
 
 #train/test responces
 ytrain = saratoga_train$price
 ytest = saratoga_test$price
 
-#rescaling
+#rescaling by stdv to get z-scores in our feature matricies
 scale_train = apply(xtrain, 2, sd)
 xtilde_train = scale(xtrain, scale = scale_train)
 xtilde_test = scale(xtest, scale = scale_train)
 
 #Running KNN
+### Maybe use old code to find the optimal k???
 knn_ = knnreg(ytrain~xtilde_train, data = saratoga_train, k = 15)
 
-rmse(knn_, saratoga_test)
 
-rmse_knn = foreach(i = 1:100, .combine='c') %do% {
-  saratoga_splity = initial_split(SaratogaHouses, prop = 0.8) 
-  saratoga_trainy = training(saratoga_splity) 
-  saratoga_testy = testing(saratoga_splity)
-  knn_besty = knnreg(ytrain~xtilde_train, data = saratoga_trainy, k = 10)
-  modelr::rmse(knn_besty, data=saratoga_test)
+xval = c(1:30)
+
+rmse_knn = foreach(i = 1:30, .combine='c') %do% {
+  #split data
+  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_train_loop = training(saratoga_split_loop) 
+  saratoga_test_loop = testing(saratoga_split_loop)
+  
+  #feature matricies
+  xtrain_loop = model.matrix(~ . - 1, data = saratoga_train_loop)
+  xtest_loop = model.matrix(~ .- 1, data = saratoga_test_loop)
+  
+  #train/test responces
+  ytrain_loop = saratoga_train_loop$price
+  ytest_loop = saratoga_test_loop$price
+  
+  #rescaling
+  scale_train_loop = apply(xtrain_loop, 2, sd)
+  xtilde_train_loop = scale(xtrain_loop, scale = scale_train_loop)
+  xtilde_test_loop = scale(xtest_loop, scale = scale_train_loop)
+  
+  #finding optimal k
+  rmse_loop = foreach(j = 1:30, .combine='c') %do%{
+    knn_inner = knnreg(ytrain_loop~xtilde_train_loop, data = saratoga_train_loop, k = j)
+    modelr::rmse(knn_inner, data = saratoga_test_loop)
+  }
+  
+  rmse_frame = data.frame(rmse_loop, xval)
+  
+  k_frame = rmse_frame %>%
+    filter(rmse_loop!=0) %>%
+    arrange(rmse_loop) %>%
+    head(1) %>%
+    select(xval)
+  
+  optimal = k_frame[1,1]
+  
+  #running KNN
+  knn_loop = knnreg(ytrain_loop~xtilde_train_loop, data = saratoga_train_loop, k = optimal)
+  modelr::rmse(knn_loop, data = saratoga_test_loop)
 } %>%
   mean()
+
+rmse_knn
 ```
 
 
+The KNN model clearly dominates the competition when looking at out of sample performance.  Its RMSE is significantly lower than the best linear model we could build above.  In an effort to build the best model for pricing homes, we should clearly do this using K-nearest neighbors.
+
+
+## 3.) Classification and retrospective sampling
+```{r include=False}
+credit = read.csv(here("data/german_credit.csv"))
+```
+
+
+
+### Ploting probability of default
+
+To begin this analysis, we will take a look at the likelihood that one will default based on their credit history:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+credit %>% 
+  ggplot(aes(x = history, y = Default/1000, fill = history)) +
+  geom_col() +
+  labs(x = "Credit History", y = "Default Probability", title = "Probability of Default based on Credit History") +
+  scale_fill_colorblind() +
+  theme_igray() +
+  theme(legend.position = "none")
+```
+The plot above suggests that those with 'terrible' credit history will be the least likely to default on their loans.  It does not take much to infer that something is amiss with our dataset.
+
+
+### Making a predictive model
+Despite the red-flags from the plot above, it may be useful to see how well we can predict a default within our data set.  We will begin this process by splitting the data into a training and testing set.  We will then use a logistic model to determine the probability that one will default on their loan.
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+##Splitting data to test out of sample preformance
+credit_split = initial_split(credit, prop = .8)
+credit_train = training(credit_split)
+credit_test = testing(credit_split)
+```
+
+Below is a table displaying how well our logistic model predicts if one will default within our training set.  If the probability of defaulting is over 50% the model predicts they will default.
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+##building a predicitive model and checking its performance 
+lm_credit = glm(Default ~ duration + amount + installment + age + history + purpose + foreign, data=credit_train, family = "binomial")
+pred_train = predict(lm_credit, credit_train)
+yhat_train = ifelse(pred_train > .5, 1,0)
+confusion = table(y=credit_train$Default, yhat = yhat_train)
+confusion
+```
+*Percentage of correct predictions
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+sum(diag(confusion)/sum(confusion)) * 100
+```
+
+
+This table shows our out-of-sample performance using our trained model
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+pred_test = predict(lm_credit, credit_test)
+yhat_test = ifelse(pred_test > .5, 1, 0)
+confusion_test = table(y=credit_test$Default, yhat = yhat_test)
+confusion_test
+```
+
+*Percentage of correct predictions
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+sum(diag(confusion_test)/sum(confusion_test)) * 100
+```
+
+
+Below shows the actual distribution of defaults in our dataset.  If we were to use a model that guessed 0 for every individual, it would have perform with a 70% success rate.
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+#Testing a null model that only predicts 0
+table(credit$Default)
+null_tab = table(credit$Default)
+```
+
+*Success rate
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+700/sum(table(credit$Default)) * 100
+
+```
+
+The results above show that the method for collecting this data is quite clearly flawed.  This data set seems to suggest that those with 'terrible' credit history are just as likely to default on a loan as those with 'good' credit history.  This does not make any intuitive sense and is likely the result of improper sampling.  Moreover, it dismisses any predictive power of a logistic model to data outside of this sample. If the bank tried to build a model using random sampling, they would likely be able to build a better predictive model regarding rates of default.
+
+
+## 4.) Children and Hotel Reservations
+```{r include=FALSE}
+hotels_dev = read.csv(here("data/hotels_dev.csv"))
+hotels_val = read.csv(here("data/hotels_val.csv"))
+```
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+dev_split = initial_split(hotels_dev, prop = .8)
+dev_train = training(dev_split)
+dev_test = testing(dev_split)
+```
+
+### Baseline 1
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+BassLine1 = glm(children ~ market_segment + adults + customer_type + is_repeated_guest, data = dev_train, family = 'binomial')
+```

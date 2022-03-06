@@ -25,7 +25,8 @@ librarian::shelf(
   rsample,
   caret,
   foreach,
-  parallel
+  parallel,
+  gamlr
 )
 
 here::i_am("R/include.R")
