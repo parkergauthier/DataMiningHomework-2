@@ -26,7 +26,8 @@ librarian::shelf(
   caret,
   foreach,
   parallel,
-  gamlr
+  gamlr,
+  glmnet
 )
 
 here::i_am("R/include.R")

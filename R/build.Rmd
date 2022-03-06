@@ -34,8 +34,8 @@ capmetro %>%
   scale_color_brewer(palette = "Set1")
   
 ```
-  The figure above gives us some useful insights into the demand for Capital Metro's public bus line at different points in time.  Perhaps the most obvious takeaway is that demand is significantly less on the weekends than on the weekdays, with Saturday's and Sunday's demand being quite meager compared to that of Monday-Friday.  Moreover, peak demand on Monday through Friday is similar from day to day, having a steady increase from the morning hours until the evening rush-hour where demand begins to decline. This could suggest that most people riding the bus in Austin are using it to get to and from work since demand coincides with typical working hours. Another explanation for larger demand later in the day could be that people are using the bus for recreational activities after they clock-out from work.
-    Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of certain businesses being closed on Mondays, therefore there are less things for people to do during this time.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of colder temperatures keeping people from going out or perhaps they are utilizing warmer, private methods of travel on these days.  This could hint that people are more tolerant of colder weather on Monday and Tuesday as these days are a fresh start after the weekend.
+  The figure above gives us some useful insights into the demand for Capital Metro's public bus line at different points in time.  Perhaps the most obvious takeaway is that demand is significantly less on the weekends than on the weekdays, with Saturday's and Sunday's demand being quite meager compared to that of Monday-Friday.  Moreover, peak demand on Monday through Friday is similar from day to day, having a steady increase from the morning hours until early evening. This suggests that the bus line is mostly used by students who have classes in the afternoon and evening during the week. Furthermore, the growth in boardings later in the day could suggest that most students stay on campus until this time, despite when their classes start.
+    Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of students taking part in recreational weekend activities since September is early in the semester and they have less pressure from midterms and final exams.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of late semester burnout as students may wish to go home earlier to rest later in the week.  Another explanation for these trends are when holidays take place in these months.  September has Labor Day which always falls on a Monday, and November has Thanksgiving Break which starts on a Wednesday and goes through Friday.
     
     
 ### Bus Boardings vs Temperature
@@ -74,8 +74,8 @@ saratoga_split = initial_split(SaratogaHouses, prop = 0.8)
 saratoga_train = training(saratoga_split) 
 saratoga_test = testing(saratoga_split) 
 ```
-  Lets begin by calculating the out-of-sample, Root Mean Squared Error (RMSE) for three different linear models.  The first will be "built by hand" as the coefficients will be selected based off arbitrary assumptions, made by yours truly, of their ability to predict price.  These coefficients will include age of the home, land value, bedrooms, and bathrooms among others and some interaction effects.  The second will be built using a forward selection method of building the model from the bottom up.  The last will be built using stepwise selection with our 'hand-built' model as our starting point. Finally, to ensure the validity of the best performing model, we will loop through this process 30 times and calculate the average RMSE for each.
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+  Lets begin by calculating the out-of-sample, Root Mean Squared Error (RMSE) for a few different linear models.  The first will be "built by hand" as the coefficients will be selected based off arbitrary assumptions, made by yours truly, of their ability to predict price.  These coefficients will include age of the home, land value, bedrooms, and bathrooms among others and some interaction effects.  The second will be built using a forward selection method of building the model from the bottom up.  The third will be built using stepwise selection with our 'hand-built' model as our starting point. The last will be constructed using the Lasso regression method. Finally, to ensure the validity of the best performing model, we will loop through this process 30 times and calculate the average RMSE for each.
+```{r include = FALSE, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
 
 ###################BUILDING A LINEAR MODEL#################  
@@ -110,8 +110,8 @@ rmse_og = foreach(i = 1:30, .combine='c') %do% {
 
 rmse_og
 ```
-*Average RMSE for our forward selection model:
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+```{r include = FALSE, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 rmse_forward = foreach(i = 1:30, .combine='c') %do% {
   saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
   saratoga_train_loop = training(saratoga_split_loop) 
@@ -124,12 +124,15 @@ lm_forward_loop = step(lm0,
 } %>%
   mean() %>% 
   round(2)
+```
 
+*Average RMSE for our forward selection model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 rmse_forward
 
 ```
-*Average RMSE for our stepwise selection model:
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+```{r include = FALSE, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 rmse_step = foreach(i = 1:30, .combine='c') %do% {
   saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
   saratoga_train_loop = training(saratoga_split_loop) 
@@ -140,13 +143,35 @@ rmse_step = foreach(i = 1:30, .combine='c') %do% {
 } %>%
   mean() %>% 
   round(2)
-
+```
+*Average RMSE for our stepwise selection model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 rmse_step
 ```
+*Cross validated RMSE for Lasso Regression
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# model matricies
+sara_x = model.matrix(price ~ . -1, data = saratoga_train)
+sara_y = saratoga_train$price
 
-We can see that the linear model that tends to minimize our RMSE is our forward-section model.  We will use this to compare to our KNN model.
+# cross validated
+sara_cv = cv.glmnet(sara_x, sara_y, alpha = 1)
 
-For our KNN model, we will optimize k  and will initiate a similar loop to determine the average out-of-sample performance of our model.
+best_lambda = sara_cv$lambda.min
+
+sara_x_test = model.matrix(price~.-1, data = saratoga_test)
+
+best_sara = glmnet(sara_x, sara_y, alpha = 1, lambda = best_lambda)
+
+sara_pred = predict(best_sara, s=  best_lambda, newx = sara_x_test)
+
+RMSE(sara_pred, saratoga_test$price)
+```
+
+
+Now that we have various scores for different builds of linear models, let us see how these compare to our KNN model.
+
+For our KNN model, we will optimize k and will initiate a similar loop to determine the average out-of-sample performance of our model.
 
 *The RMSE for the KNN model:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
@@ -172,7 +197,6 @@ xtilde_test = scale(xtest, scale = scale_train)
 ### Maybe use old code to find the optimal k???
 knn_ = knnreg(ytrain~xtilde_train, data = saratoga_train, k = 15)
 
-
 xval = c(1:30)
 
 rmse_knn = foreach(i = 1:30, .combine='c') %do% {
@@ -194,10 +218,17 @@ rmse_knn = foreach(i = 1:30, .combine='c') %do% {
   xtilde_train_loop = scale(xtrain_loop, scale = scale_train_loop)
   xtilde_test_loop = scale(xtest_loop, scale = scale_train_loop)
   
+  #making data frames for regression
+  xtilde_train_loop = data.frame(xtilde_train_loop) %>%
+  mutate(price = c(ytrain_loop))
+
+  xtilde_test_loop = data.frame(xtilde_test_loop) %>%
+  mutate(price = c(ytest_loop))
+  
   #finding optimal k
   rmse_loop = foreach(j = 1:30, .combine='c') %do%{
-    knn_inner = knnreg(ytrain_loop~xtilde_train_loop, data = saratoga_train_loop, k = j)
-    modelr::rmse(knn_inner, data = saratoga_test_loop)
+    knn_inner = knnreg(price ~ ., data = xtilde_train_loop, k = j)
+    modelr::rmse(knn_inner, data = xtilde_test_loop)
   }
   
   rmse_frame = data.frame(rmse_loop, xval)
@@ -211,8 +242,8 @@ rmse_knn = foreach(i = 1:30, .combine='c') %do% {
   optimal = k_frame[1,1]
   
   #running KNN
-  knn_loop = knnreg(ytrain_loop~xtilde_train_loop, data = saratoga_train_loop, k = optimal)
-  modelr::rmse(knn_loop, data = saratoga_test_loop)
+  knn_loop = knnreg(price ~ ., data = xtilde_train_loop, k = optimal)
+  modelr::rmse(knn_loop, data = xtilde_test_loop)
 } %>%
   mean()
 
@@ -220,7 +251,7 @@ rmse_knn
 ```
 
 
-The KNN model clearly dominates the competition when looking at out of sample performance.  Its RMSE is significantly lower than the best linear model we could build above.  In an effort to build the best model for pricing homes, we should clearly do this using K-nearest neighbors.
+It would appear that our linear models, particularly our Lasso model outperforms our KNN model. To optimally predict price, we should build a linear model using Lasso regularization. 
 
 
 ## 3.) Classification and retrospective sampling
@@ -228,25 +259,33 @@ The KNN model clearly dominates the competition when looking at out of sample pe
 credit = read.csv(here("data/german_credit.csv"))
 ```
 
-
-
 ### Ploting probability of default
 
-To begin this analysis, we will take a look at the likelihood that one will default based on their credit history:
+To begin this analysis, we will take a look at the likelihood that one will default based solely on their credit history.  Particularly, we will be looking at the probability that one defaults given their history:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-credit %>% 
-  ggplot(aes(x = history, y = Default/1000, fill = history)) +
+
+counts = addmargins(table(credit$Default, credit$history))
+
+good_p = counts[2,1]/counts[3,1]
+poor_p = counts[2,2]/counts[3,2]
+terrible_p = counts[2,3]/counts[3,3]
+
+frame_ = data.frame(prob = c(good_p,poor_p,terrible_p), history = c("Good","Poor","Terrible"))
+
+frame_ %>% 
+  ggplot(aes(x = history, y = prob, fill = history)) +
   geom_col() +
   labs(x = "Credit History", y = "Default Probability", title = "Probability of Default based on Credit History") +
-  scale_fill_colorblind() +
+  scale_fill_discrete() +
+  scale_y_continuous(labels=scales::percent) +
   theme_igray() +
   theme(legend.position = "none")
 ```
-The plot above suggests that those with 'terrible' credit history will be the least likely to default on their loans.  It does not take much to infer that something is amiss with our dataset.
+The plot above suggests that the probability of defaulting goes DOWN with worse credit history.  It does not take much to infer that something is amiss with our data set.
 
 
 ### Making a predictive model
-Despite the red-flags from the plot above, it may be useful to see how well we can predict a default within our data set.  We will begin this process by splitting the data into a training and testing set.  We will then use a logistic model to determine the probability that one will default on their loan.
+Despite the red-flags from the plot above, it may be useful to see how well we can predict a default within our data set.  We will begin this process by splitting the data into a training and testing set.  We will then use a logistic model to determine the probability that one will default on their loan then test its out of sample performance.
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 ##Splitting data to test out of sample preformance
 credit_split = initial_split(credit, prop = .8)
@@ -298,7 +337,7 @@ null_tab = table(credit$Default)
 
 ```
 
-The results above show that the method for collecting this data is quite clearly flawed.  This data set seems to suggest that those with 'terrible' credit history are just as likely to default on a loan as those with 'good' credit history.  This does not make any intuitive sense and is likely the result of improper sampling.  Moreover, it dismisses any predictive power of a logistic model to data outside of this sample. If the bank tried to build a model using random sampling, they would likely be able to build a better predictive model regarding rates of default.
+The results above show that the method for collecting this data is quite clearly flawed.  This data set seems to suggest that those with 'terrible' credit history are just as likely to default on a loan as those with 'good' credit history.  This does not make any intuitive sense and is likely the result of improper sampling.  Moreover, it dismisses any predictive power of a logistic model to data outside of this sample (which has none considering a null-model that predicts default for every individual). If the bank tried to build a model using random sampling, they would likely be able to build a better predictive model regarding rates of default.
 
 
 ## 4.) Children and Hotel Reservations
@@ -315,5 +354,34 @@ dev_test = testing(dev_split)
 
 ### Baseline 1
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-BassLine1 = glm(children ~ market_segment + adults + customer_type + is_repeated_guest, data = dev_train, family = 'binomial')
+BaseLine1 = glm(children ~ market_segment + adults + customer_type + is_repeated_guest, data = dev_train, family = "binomial")
+
+coef(BaseLine1)
+
+pred_base1 = predict(BaseLine1, dev_test)
+
+yhat_base1 = ifelse(pred_base1 > .5, 1, 0)
+
+confusion_base1 = table(Actual = dev_test$children, Predictions = yhat_base1)
+
+confusion_base1
+
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
