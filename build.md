@@ -17,7 +17,18 @@ afternoon and evening during the week. Furthermore, the growth in
 boardings later in the day could suggest that most students stay on
 campus until this time, despite when their classes start.
 
-    Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of students taking part in recreational weekend activities since September is early in the semester and they have less pressure from midterms and final exams.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of late semester burnout as students may wish to go home earlier to rest later in the week.  Another explanation for these trends are when holidays take place in these months.  September has Labor Day which always falls on a Monday, and November has Thanksgiving Break which starts on a Wednesday and goes through Friday.
+Additionally, there are some interesting trends unique to the monthly
+data. It would appear that in September, boardings on Mondays are fewer
+than any day of the week. This could be the result of students taking
+part in recreational weekend activities since September is early in the
+semester and they have less pressure from midterms and final exams.
+Another trend is that average boardings in November on Wednesday,
+Thursday, and Friday are lower than any other month. This could be the
+result of late semester burnout as students may wish to go home earlier
+to rest later in the week. Another explanation for these trends are when
+holidays take place in these months. September has Labor Day which
+always falls on a Monday, and November has Thanksgiving Break which
+starts on a Wednesday and goes through Friday.
 
 ### Bus Boardings vs Temperature
 
@@ -55,13 +66,13 @@ be constructed using the Lasso regression method. Finally, to ensure the
 validity of the best performing model, we will loop through this process
 30 times and calculate the average RMSE for each.
 
-\*The average RMSE for our ‘hand-built’ model:
+*The average RMSE for our ‘hand-built’ model:*
 
-    ## [1] 62190.68
+    ## [1] 60871.7
 
-\*Cross validated RMSE for Lasso Regression
+*Cross validated RMSE for Lasso Regression*
 
-    ## [1] 58689.85
+    ## [1] 58291.24
 
 Now that we have some scores for different builds of linear models, let
 us see how these compare to our KNN model.
@@ -69,9 +80,9 @@ us see how these compare to our KNN model.
 For our KNN model, we will optimize k and will initiate a similar loop
 to determine the average out-of-sample performance of our model.
 
-\*The RMSE for the KNN model:
+*The RMSE for the KNN model:*
 
-    ## [1] 61354.47
+    ## [1] 62227.09
 
 It would appear that our linear models, particularly our Lasso model
 outperforms our KNN model. To optimally predict price, we should build a
@@ -101,11 +112,11 @@ determine the probability that one will default on their loan.
 The coefficients for our logistic model:
 
     ##         (Intercept)            duration              amount         installment 
-    ##       -0.4366359799        0.0211310841        0.0001149848        0.2825623397 
+    ##       -2.798634e-01        2.725500e-02        8.235156e-05        1.356615e-01 
     ##                 age         historypoor     historyterrible          purposeedu 
-    ##       -0.0285827887       -1.2499784497       -1.9513600278        0.7349695883 
+    ##       -1.900408e-02       -1.415211e+00       -1.992679e+00        7.840409e-01 
     ## purposegoods/repair       purposenewcar      purposeusedcar       foreigngerman 
-    ##        0.0287726220        0.6515968562       -0.6636796416       -1.0375556531
+    ##        1.109658e-01        8.663325e-01       -9.022927e-01       -1.058499e+00
 
 As seen above, holding all else fixed, the magnitude of the coefficients
 do not explicitly tell us the odds that one will default given credit
@@ -133,12 +144,12 @@ children would be on the itinerary.
 
     ##       Predictions
     ## Actual    0
-    ##      0 8264
-    ##      1  736
+    ##      0 8269
+    ##      1  731
 
-\*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 
-    ## [1] 91.82
+    ## [1] 91.88
 
 #### Baseline 2
 
@@ -147,12 +158,12 @@ better results than our previous model:
 
     ##       Predictions
     ## Actual    0    1
-    ##      0 8172   92
-    ##      1  474  262
+    ##      0 8173   96
+    ##      1  466  265
 
-\*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 
-    ## [1] 93.71
+    ## [1] 93.76
 
 #### Best linear model
 
@@ -161,12 +172,12 @@ regression, has similar results to Baseline 2:
 
     ##       Predictions
     ## Actual    0    1
-    ##      0 8166   98
-    ##      1  477  259
+    ##      0 8161  108
+    ##      1  458  273
 
-\*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 
-    ## [1] 93.61
+    ## [1] 93.71
 
 ### Model Validation: Step 1
 
@@ -175,12 +186,12 @@ vs Predicted values:
 
     ##       Predictions
     ## Actual    0    1
-    ##      0 4529   68
-    ##      1  254  148
+    ##      0 4527   70
+    ##      1  257  145
 
-\*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 
-    ## [1] 93.56
+    ## [1] 93.46
 
 We can see from the results above that our model performed well with the
 new data.

@@ -76,7 +76,8 @@ capmetro %>%
   The figure above gives us some useful insights into the demand for Capital Metro's public bus line at different points in time.  Perhaps the most obvious takeaway is that demand is significantly less on the weekends than on the weekdays, with Saturday's and Sunday's demand being quite meager compared to that of Monday-Friday.  Moreover, peak demand on Monday through Friday is similar from day to day, having a steady increase from the morning hours until early evening. This suggests that the bus line is mostly used by students who have classes in the afternoon and evening during the week. Furthermore, the growth in boardings later in the day could suggest that most students stay on campus until this time, despite when their classes start.
 ```
 ```
-    Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of students taking part in recreational weekend activities since September is early in the semester and they have less pressure from midterms and final exams.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of late semester burnout as students may wish to go home earlier to rest later in the week.  Another explanation for these trends are when holidays take place in these months.  September has Labor Day which always falls on a Monday, and November has Thanksgiving Break which starts on a Wednesday and goes through Friday.
+
+  Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of students taking part in recreational weekend activities since September is early in the semester and they have less pressure from midterms and final exams.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of late semester burnout as students may wish to go home earlier to rest later in the week.  Another explanation for these trends are when holidays take place in these months.  September has Labor Day which always falls on a Monday, and November has Thanksgiving Break which starts on a Wednesday and goes through Friday.
     
     
 ### Bus Boardings vs Temperature
@@ -122,7 +123,7 @@ saratoga_test = testing(saratoga_split)
 lm_ = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train)
 
 ```
-*The average RMSE for our 'hand-built' model:
+*The average RMSE for our 'hand-built' model:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 rmse_og = foreach(i = 1:30, .combine='c') %do% {
   saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
@@ -137,7 +138,7 @@ rmse_og = foreach(i = 1:30, .combine='c') %do% {
 rmse_og
 ```
 
-*Cross validated RMSE for Lasso Regression
+*Cross validated RMSE for Lasso Regression*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 # model matricies
 rmse_lasso = foreach(i = 1:30, .combine='c') %do% {
@@ -172,7 +173,7 @@ rmse_lasso
 
   For our KNN model, we will optimize k and will initiate a similar loop to determine the average out-of-sample performance of our model.
 
-*The RMSE for the KNN model:
+*The RMSE for the KNN model:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
 
@@ -339,7 +340,7 @@ confusion_base1 = table(Actual = dev_test$children, Predictions = yhat_base1)
 confusion_base1
 
 ```
-*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
  round(sum(diag(confusion_base1))/sum(confusion_base1) * 100, 2)
@@ -360,7 +361,7 @@ confusion_base2 = table(Actual = dev_test$children, Predictions = yhat_base2)
 confusion_base2
 
 ```
-*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
  round(sum(diag(confusion_base2))/sum(confusion_base2) * 100, 2)
@@ -391,7 +392,7 @@ confusion_best = table(Actual = dev_test$children, Predictions = yhat_best)
 
 confusion_best
 ```
-*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
 round(sum(diag(confusion_best))/sum(confusion_best) * 100, 2)
@@ -416,7 +417,7 @@ confusion_val1 = table(Actual=hotels_val$children, Predictions = yhat_val1)
 
 confusion_val1
 ```
-*Percentage of out-of-sample correct classifications:
+*Percentage of out-of-sample correct classifications:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 round(sum(diag(confusion_val1))/sum(confusion_val1) * 100, 2)
 
