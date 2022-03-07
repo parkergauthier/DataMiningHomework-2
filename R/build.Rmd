@@ -5,6 +5,43 @@ date: "2/28/2022"
 output: md_document
 ---
 
+```{r include=FALSE}
+if (!("librarian" %in% rownames(utils::installed.packages()))) {
+  utils::install.packages("librarian")
+}
+
+librarian::shelf( 
+  cran_repo = "https://cran.microsoft.com/",
+  ask = FALSE,
+  stats, 
+  here,
+  kableExtra,
+  ggthemes,
+  tidyverse,
+  lubridate,
+  haven,
+  lmtest,
+  gganimate,
+  gapminder,
+  stargazer,
+  snakecase,
+  mosaic,
+  dplyr,
+  esquisse,
+  plotly,
+  modelr,
+  rsample,
+  caret,
+  foreach,
+  parallel,
+  gamlr,
+  glmnet
+)
+
+here::i_am("R/include.R")
+```
+
+
 ## 1.) Visualization
 ```{r include=FALSE}
 #Reading in the Data
@@ -74,7 +111,7 @@ saratoga_split = initial_split(SaratogaHouses, prop = 0.8)
 saratoga_train = training(saratoga_split) 
 saratoga_test = testing(saratoga_split) 
 ```
-  Lets begin by calculating the out-of-sample, Root Mean Squared Error (RMSE) for a few different linear models.  The first will be "built by hand" as the coefficients will be selected based off arbitrary assumptions, made by yours truly, of their ability to predict price.  These coefficients will include age of the home, land value, bedrooms, and bathrooms among others and some interaction effects.  The second will be built using a forward selection method of building the model from the bottom up.  The third will be built using stepwise selection with our 'hand-built' model as our starting point. The last will be constructed using the Lasso regression method. Finally, to ensure the validity of the best performing model, we will loop through this process 30 times and calculate the average RMSE for each.
+  Lets begin by calculating the out-of-sample, Root Mean Squared Error (RMSE) for two different linear models.  The first will be "built by hand" as the coefficients will be selected based off arbitrary assumptions, made by yours truly, of their ability to predict price.  These coefficients will include age of the home, land value, bedrooms, and bathrooms among others and some interaction effects.  The other will be constructed using the Lasso regression method. Finally, to ensure the validity of the best performing model, we will loop through this process 30 times and calculate the average RMSE for each.
 ```{r include = FALSE, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
 
@@ -83,17 +120,6 @@ saratoga_test = testing(saratoga_split)
 
 ##This will be our baseline.  It is an improved model relative to the medium model we used in class.  We will use this as a start to stepwise selection
 lm_ = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train)
-
-### We will begin by using forward selection (we will skip backwards selection).
-lm0 = lm(price~1, data = saratoga_train)
-lm_forward = step(lm0, 
-                  direction = 'forward',
-                  scope =~ (age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + pctCollege + fuel + sewer + newConstruction + waterfront)^2)
-
-
-#### Now we will use stepwise selection
-lm_step = step(lm_,
-               scope=~(.)^2)
 
 ```
 *The average RMSE for our 'hand-build' model:
@@ -111,65 +137,38 @@ rmse_og = foreach(i = 1:30, .combine='c') %do% {
 rmse_og
 ```
 
-```{r include = FALSE, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-rmse_forward = foreach(i = 1:30, .combine='c') %do% {
-  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
-  saratoga_train_loop = training(saratoga_split_loop) 
-  saratoga_test_loop = testing(saratoga_split_loop)
-  lm0_loop = lm(price~1, data = saratoga_train_loop)
-lm_forward_loop = step(lm0, 
-                  direction = 'forward',
-                  scope =~ (age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + pctCollege + fuel + sewer + newConstruction + waterfront)^2)
-  modelr::rmse(lm_forward_loop, data=saratoga_test_loop)
-} %>%
-  mean() %>% 
-  round(2)
-```
-
-*Average RMSE for our forward selection model:
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-rmse_forward
-
-```
-
-```{r include = FALSE, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-rmse_step = foreach(i = 1:30, .combine='c') %do% {
-  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
-  saratoga_train_loop = training(saratoga_split_loop) 
-  saratoga_test_loop = testing(saratoga_split_loop)
-  lm_step_loop = step(lm_,
-               scope=~(.)^2)
-  modelr::rmse(lm_step_loop, data=saratoga_test_loop)
-} %>%
-  mean() %>% 
-  round(2)
-```
-*Average RMSE for our stepwise selection model:
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-rmse_step
-```
 *Cross validated RMSE for Lasso Regression
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 # model matricies
-sara_x = model.matrix(price ~ . -1, data = saratoga_train)
-sara_y = saratoga_train$price
+rmse_lasso = foreach(i = 1:30, .combine='c') %do% {
+  saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
+  saratoga_train_loop = training(saratoga_split_loop) 
+  saratoga_test_loop = testing(saratoga_split_loop)
+  
+  sara_x = model.matrix(price ~ . -1, data = saratoga_train)
+  sara_y = saratoga_train$price
 
-# cross validated
-sara_cv = cv.glmnet(sara_x, sara_y, alpha = 1)
+  # cross validated
+  sara_cv = cv.glmnet(sara_x, sara_y, alpha = 1)
 
-best_lambda = sara_cv$lambda.min
+  best_lambda = sara_cv$lambda.min
 
-sara_x_test = model.matrix(price~.-1, data = saratoga_test)
+  sara_x_test = model.matrix(price~.-1, data = saratoga_test)
 
-best_sara = glmnet(sara_x, sara_y, alpha = 1, lambda = best_lambda)
+  best_sara = glmnet(sara_x, sara_y, alpha = 1, lambda = best_lambda)
 
-sara_pred = predict(best_sara, s=  best_lambda, newx = sara_x_test)
+  sara_pred = predict(best_sara, s=  best_lambda, newx = sara_x_test)
 
-RMSE(sara_pred, saratoga_test$price)
+  RMSE(sara_pred, saratoga_test$price)
+} %>%
+  mean() %>%
+  round(2)
+
+rmse_lasso
 ```
 
 
-  Now that we have various scores for different builds of linear models, let us see how these compare to our KNN model.
+  Now that we have some scores for different builds of linear models, let us see how these compare to our KNN model.
 
   For our KNN model, we will optimize k and will initiate a similar loop to determine the average out-of-sample performance of our model.
 
@@ -255,7 +254,7 @@ rmse_knn
 
 
 ## 3.) Classification and retrospective sampling
-```{r include=False}
+```{r include=FALSE}
 credit = read.csv(here("data/german_credit.csv"))
 ```
 
@@ -314,13 +313,17 @@ hotels_val = read.csv(here("data/hotels_val.csv"))
 ```
 
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+hotels_dev = hotels_dev %>% mutate(hotels_dev, arrival_date = ymd(arrival_date)) %>% filter(reserved_room_type != "L")
+hotels_val = mutate(hotels_val, arrival_date = ymd(arrival_date)) %>% filter(reserved_room_type != "L")
+
+
 dev_split = initial_split(hotels_dev, prop = .8)
 dev_train = training(dev_split)
 dev_test = testing(dev_split)
 ```
 
-### Baseline 1
-Below are the predictions on the testing set.  We can see that it never predicted children would be on the itinerary.
+#### Baseline 1
+Below are the predictions on the testing set. This will be used to measure out-of-sample performance. We can see that it never predicted children would be on the itinerary.
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 BaseLine1 = glm(children ~ (market_segment + adults + customer_type + is_repeated_guest), data = dev_train, family = "binomial")
 
@@ -333,14 +336,15 @@ confusion_base1 = table(Actual = dev_test$children, Predictions = yhat_base1)
 confusion_base1
 
 ```
-*Percentage of correct classifications:
+*Percentage of out-of-sample correct classifications:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
  round(sum(diag(confusion_base1))/sum(confusion_base1) * 100, 2)
 
 ```
 
-### Baseline 2
+#### Baseline 2
+Using the same methodology, the second baseline model shows slightly better results than our previous model:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 BaseLine2 = glm(children ~ . - arrival_date, data = dev_train, family = 'binomial')
 
@@ -353,24 +357,133 @@ confusion_base2 = table(Actual = dev_test$children, Predictions = yhat_base2)
 confusion_base2
 
 ```
-*Percentage of correct classifications:
+*Percentage of out-of-sample correct classifications:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
  round(sum(diag(confusion_base2))/sum(confusion_base2) * 100, 2)
 
 ```
 
-### Best linear model
+#### Best linear model
+Finally, we see that our best linear model, constructed using Lasso regression, has similar results to Baseline 2:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+
 x = model.matrix(children ~ . - 1, data = dev_train)
 y = dev_train$children
 
-dev_lasso_cv = cv.glmnet(x, y, nfold=10, family="binomial")
+x_test = model.matrix(children~. -1, data = dev_test)
+
+dev_lasso_cv = cv.glmnet(x, y, nfolds = 10, alpha = 1)
+
+best_lambda = dev_lasso_cv$lambda.min
+
+dev_best = glmnet(x,y,alpha=1,lambda = best_lambda)
+
+dev_best_pred = predict(dev_best, s = best_lambda, newx = x_test)
+
+yhat_best = ifelse(dev_best_pred > 0.5, 1 , 0)
+
+confusion_best = table(Actual = dev_test$children, Predictions = yhat_best)
+
+confusion_best
+```
+*Percentage of out-of-sample correct classifications:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+round(sum(diag(confusion_best))/sum(confusion_best) * 100, 2)
 
 ```
 
 
 
 
+### Model Validation: Step 1
+We will begin this process by constructing a confusion matrix of Actual vs Predicted values:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
+x_val1 = model.matrix(children~.-1, data = hotels_val)
+
+dev_val1_pred = predict(dev_best, s = best_lambda, newx = x_val1)
+
+yhat_val1 = ifelse(dev_val1_pred > 0.5 , 1, 0)
+
+
+confusion_val1 = table(Actual=hotels_val$children, Predictions = yhat_val1)
+
+confusion_val1
+```
+*Percentage of out-of-sample correct classifications:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+round(sum(diag(confusion_val1))/sum(confusion_val1) * 100, 2)
+
+```
+
+
+We can see from the results above that our model performed well with the new data.
+
+To drive this home, we will plot our results on a ROC curve by plotting the True Positive Rate against the False Positive Rate for different thresholds of t.
+
+```{r ROC curve (4), echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+TPR_t = foreach(i = 1:90, .combine = 'c') %do% {
+  yhat_val_loop = ifelse(dev_val1_pred > (i/100) , 1, 0)
+  confusion_val_loop = table(Actual=hotels_val$children, Predictions = yhat_val_loop)
+  confusion_val_loop[2,2]/(confusion_val_loop[2,1] + confusion_val_loop[2,2])
+}
+
+FPR_t = foreach(i = 1:90, .combine = 'c') %do% {
+  yhat_val_loop = ifelse(dev_val1_pred > (i/100) , 1, 0)
+  confusion_val_loop = table(Actual=hotels_val$children, Predictions = yhat_val_loop)
+  confusion_val_loop[1,2]/(confusion_val_loop[1,2] + confusion_val_loop[1,1])
+}
+
+
+ROC_data = data.frame(TPR_t,FPR_t)
+
+ROC_data %>%
+  ggplot(aes(x = FPR_t, y = TPR_t,)) +
+  geom_line(color = "red") +
+  labs(x = "FPR",
+       y = "TPR",
+       title = "ROC Curve For Our Best Linear Model") +
+  theme_economist_white()
+```
+
+### Model Validation: Step 2
+```{r Folds(4), echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+n = nrow(hotels_val)
+Kfolds = 20
+
+hotels_val = hotels_val %>% mutate(fold_id = rep(1:Kfolds, length = n)%>%sample)
+
+child_count_hat = c()
+child_count_actual = c()
+
+for(i in 1:Kfolds) {
+  hotels_fold = hotels_val %>% filter(fold_id == i)
+  preds = predict(BaseLine2, hotels_fold, type = "response")
+  child_hat = sum(preds)
+  child_count_hat = c(child_count_hat, child_hat)
+  child_actual=sum(hotels_fold$children)
+  child_count_actual=c(child_count_actual, child_actual)
+}
+
+fold = c(1:20)
+
+fold_frame = data.frame(fold,child_count_hat,child_count_actual)
+
+
+fold_frame %>% 
+  ggplot(aes(x = fold)) +
+  geom_col(aes(y = child_count_actual, color = child_count_actual), color = "blue", alpha = .7) +
+  geom_col(aes(y = child_count_hat, color = child_count_hat), color = "red", alpha = .7) + 
+  geom_point(aes(y = child_count_actual), color = "blue", size = 3.5) +
+  geom_point(aes(y = child_count_hat), color = "red", size = 3.5) +
+  labs(title = "Model Performance Over 20 folds", x = "Fold ID", y = "Families with Children", caption = "Blue: Actual, Red: Predicted") +
+  guides(color = guide_legend(title = "Legend"))
+
+```
+
+For 20 folds of the data in hotels_val, the graph above shows the predicted vs the actual values of the number of families that will have children with them.  We can see that the model used here tends to over predict the number of children in each fold, but it seems that the predicted values are quite close to the actual values.
 
