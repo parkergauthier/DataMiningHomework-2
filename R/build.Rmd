@@ -320,32 +320,54 @@ dev_test = testing(dev_split)
 ```
 
 ### Baseline 1
+Below are the predictions on the testing set.  We can see that it never predicted children would be on the itinerary.
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-BaseLine1 = glm(children ~ market_segment + adults + customer_type + is_repeated_guest, data = dev_train, family = "binomial")
+BaseLine1 = glm(children ~ (market_segment + adults + customer_type + is_repeated_guest), data = dev_train, family = "binomial")
 
-coef(BaseLine1)
+pred_base1 = predict(BaseLine1, dev_test, type = 'response')
 
-pred_base1 = predict(BaseLine1, dev_test)
-
-yhat_base1 = ifelse(pred_base1 > .5, 1, 0)
+yhat_base1 = ifelse(pred_base1 > 0.5, 1, 0)
 
 confusion_base1 = table(Actual = dev_test$children, Predictions = yhat_base1)
 
 confusion_base1
 
 ```
+*Percentage of correct classifications:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
+ round(sum(diag(confusion_base1))/sum(confusion_base1) * 100, 2)
 
+```
 
+### Baseline 2
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+BaseLine2 = glm(children ~ . - arrival_date, data = dev_train, family = 'binomial')
 
+pred_base2 = predict(BaseLine2, dev_test, type = 'response')
 
+yhat_base2 = ifelse(pred_base2 > 0.5, 1, 0)
 
+confusion_base2 = table(Actual = dev_test$children, Predictions = yhat_base2)
 
+confusion_base2
 
+```
+*Percentage of correct classifications:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
+ round(sum(diag(confusion_base2))/sum(confusion_base2) * 100, 2)
 
+```
 
+### Best linear model
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+x = model.matrix(children ~ . - 1, data = dev_train)
+y = dev_train$children
 
+dev_lasso_cv = cv.glmnet(x, y, nfold=10, family="binomial")
+
+```
 
 
 
