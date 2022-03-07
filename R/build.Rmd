@@ -71,7 +71,11 @@ capmetro %>%
   scale_color_brewer(palette = "Set1")
   
 ```
+```
+```
   The figure above gives us some useful insights into the demand for Capital Metro's public bus line at different points in time.  Perhaps the most obvious takeaway is that demand is significantly less on the weekends than on the weekdays, with Saturday's and Sunday's demand being quite meager compared to that of Monday-Friday.  Moreover, peak demand on Monday through Friday is similar from day to day, having a steady increase from the morning hours until early evening. This suggests that the bus line is mostly used by students who have classes in the afternoon and evening during the week. Furthermore, the growth in boardings later in the day could suggest that most students stay on campus until this time, despite when their classes start.
+```
+```
     Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of students taking part in recreational weekend activities since September is early in the semester and they have less pressure from midterms and final exams.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of late semester burnout as students may wish to go home earlier to rest later in the week.  Another explanation for these trends are when holidays take place in these months.  September has Labor Day which always falls on a Monday, and November has Thanksgiving Break which starts on a Wednesday and goes through Friday.
     
     
@@ -90,13 +94,9 @@ capmetro %>%
        color = "Weekday vs Weekend:") +
   scale_color_brewer(palette = "Set1", 
                      labels = c("Weekday", "Weekend")) +
-  theme_wsj() +
-  theme(axis.title = element_text(size = 20),
-      plot.title = element_text(size=20),
-      legend.title=element_text(size = 15),
-      legend.text=element_text(size=12),
-      legend.position = "bottom",
-      text = element_text(size=8.5))
+  theme_economist()
+```
+```
 ```
   Our next figure above depicts the relationship between the number of boardings and temperature.  As indicated in the graph, each point represents the number of boardings in a 15-minute interval, and the plots are faceted by the hour of the day.  Again, we can see that demand is much greater during the week than on the weekends, consistent with our first figure.  More importantly, we can see that there is no apparent relationship between temperature and the number of boardings in the day.  Boardings appear to be affected more by the time of the day, not how hot or cold it is outside.
   
@@ -122,7 +122,7 @@ saratoga_test = testing(saratoga_split)
 lm_ = lm(price ~ age + landValue + bedrooms + fireplaces + bathrooms + rooms + centralAir + lotSize + livingArea + heating + lotSize*bedrooms + lotSize*bathrooms + lotSize*rooms + livingArea*lotSize + livingArea*rooms, data = saratoga_train)
 
 ```
-*The average RMSE for our 'hand-build' model:
+*The average RMSE for our 'hand-built' model:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 rmse_og = foreach(i = 1:30, .combine='c') %do% {
   saratoga_split_loop = initial_split(SaratogaHouses, prop = 0.8) 
@@ -280,6 +280,9 @@ frame_ %>%
   theme_igray() +
   theme(legend.position = "none")
 ```
+```
+```
+
   The plot above suggests that the probability of defaulting goes DOWN with worse credit history.  It does not take much to infer that something is amiss with our data set.
 
 

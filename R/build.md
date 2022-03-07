@@ -4,6 +4,7 @@
 ### Bus Boardings vs Time
 
 ![](build_files/figure-markdown_strict/Average%20Boardings%20by%20Hour%20(1)-1.png)
+
 The figure above gives us some useful insights into the demand for
 Capital Metro’s public bus line at different points in time. Perhaps the
 most obvious takeaway is that demand is significantly less on the
@@ -14,23 +15,14 @@ increase from the morning hours until early evening. This suggests that
 the bus line is mostly used by students who have classes in the
 afternoon and evening during the week. Furthermore, the growth in
 boardings later in the day could suggest that most students stay on
-campus until this time, despite when their classes start. Additionally,
-there are some interesting trends unique to the monthly data. It would
-appear that in September, boardings on Mondays are fewer than any day of
-the week. This could be the result of students taking part in
-recreational weekend activities since September is early in the semester
-and they have less pressure from midterms and final exams. Another trend
-is that average boardings in November on Wednesday, Thursday, and Friday
-are lower than any other month. This could be the result of late
-semester burnout as students may wish to go home earlier to rest later
-in the week. Another explanation for these trends are when holidays take
-place in these months. September has Labor Day which always falls on a
-Monday, and November has Thanksgiving Break which starts on a Wednesday
-and goes through Friday.
+campus until this time, despite when their classes start.
+
+    Additionally, there are some interesting trends unique to the monthly data.  It would appear that in September, boardings on Mondays are fewer than any day of the week.  This could be the result of students taking part in recreational weekend activities since September is early in the semester and they have less pressure from midterms and final exams.  Another trend is that average boardings in November on Wednesday, Thursday, and Friday are lower than any other month.  This could be the result of late semester burnout as students may wish to go home earlier to rest later in the week.  Another explanation for these trends are when holidays take place in these months.  September has Labor Day which always falls on a Monday, and November has Thanksgiving Break which starts on a Wednesday and goes through Friday.
 
 ### Bus Boardings vs Temperature
 
 ![](build_files/figure-markdown_strict/Boardings%20vs%20Temp%20(1)-1.png)
+
 Our next figure above depicts the relationship between the number of
 boardings and temperature. As indicated in the graph, each point
 represents the number of boardings in a 15-minute interval, and the
@@ -63,13 +55,13 @@ be constructed using the Lasso regression method. Finally, to ensure the
 validity of the best performing model, we will loop through this process
 30 times and calculate the average RMSE for each.
 
-\*The average RMSE for our ‘hand-build’ model:
+\*The average RMSE for our ‘hand-built’ model:
 
-    ## [1] 60816.87
+    ## [1] 62190.68
 
 \*Cross validated RMSE for Lasso Regression
 
-    ## [1] 52829.65
+    ## [1] 58689.85
 
 Now that we have some scores for different builds of linear models, let
 us see how these compare to our KNN model.
@@ -79,7 +71,7 @@ to determine the average out-of-sample performance of our model.
 
 \*The RMSE for the KNN model:
 
-    ## [1] 64016.16
+    ## [1] 61354.47
 
 It would appear that our linear models, particularly our Lasso model
 outperforms our KNN model. To optimally predict price, we should build a
@@ -93,10 +85,11 @@ linear model using Lasso regularization.
 To begin this analysis, we will take a look at the likelihood that one
 will default based solely on their credit history. Particularly, we will
 be looking at the probability that one defaults given their history:
-![](build_files/figure-markdown_strict/unnamed-chunk-9-1.png) The plot
-above suggests that the probability of defaulting goes DOWN with worse
-credit history. It does not take much to infer that something is amiss
-with our data set.
+![](build_files/figure-markdown_strict/unnamed-chunk-9-1.png)
+
+The plot above suggests that the probability of defaulting goes DOWN
+with worse credit history. It does not take much to infer that something
+is amiss with our data set.
 
 ### Making a predictive model
 
@@ -108,11 +101,11 @@ determine the probability that one will default on their loan.
 The coefficients for our logistic model:
 
     ##         (Intercept)            duration              amount         installment 
-    ##       -1.273827e+00        2.454894e-02        7.912923e-05        3.149001e-01 
+    ##       -0.4366359799        0.0211310841        0.0001149848        0.2825623397 
     ##                 age         historypoor     historyterrible          purposeedu 
-    ##       -1.717702e-02       -1.012738e+00       -2.012604e+00        8.404994e-01 
+    ##       -0.0285827887       -1.2499784497       -1.9513600278        0.7349695883 
     ## purposegoods/repair       purposenewcar      purposeusedcar       foreigngerman 
-    ##        2.623083e-01        9.286465e-01       -4.270398e-01       -7.433400e-01
+    ##        0.0287726220        0.6515968562       -0.6636796416       -1.0375556531
 
 As seen above, holding all else fixed, the magnitude of the coefficients
 do not explicitly tell us the odds that one will default given credit
@@ -140,12 +133,12 @@ children would be on the itinerary.
 
     ##       Predictions
     ## Actual    0
-    ##      0 8288
-    ##      1  712
+    ##      0 8264
+    ##      1  736
 
 \*Percentage of out-of-sample correct classifications:
 
-    ## [1] 92.09
+    ## [1] 91.82
 
 #### Baseline 2
 
@@ -154,12 +147,12 @@ better results than our previous model:
 
     ##       Predictions
     ## Actual    0    1
-    ##      0 8192   96
-    ##      1  448  264
+    ##      0 8172   92
+    ##      1  474  262
 
 \*Percentage of out-of-sample correct classifications:
 
-    ## [1] 93.96
+    ## [1] 93.71
 
 #### Best linear model
 
@@ -168,12 +161,12 @@ regression, has similar results to Baseline 2:
 
     ##       Predictions
     ## Actual    0    1
-    ##      0 8183  105
-    ##      1  461  251
+    ##      0 8166   98
+    ##      1  477  259
 
 \*Percentage of out-of-sample correct classifications:
 
-    ## [1] 93.71
+    ## [1] 93.61
 
 ### Model Validation: Step 1
 
@@ -182,12 +175,12 @@ vs Predicted values:
 
     ##       Predictions
     ## Actual    0    1
-    ##      0 4528   69
+    ##      0 4529   68
     ##      1  254  148
 
 \*Percentage of out-of-sample correct classifications:
 
-    ## [1] 93.54
+    ## [1] 93.56
 
 We can see from the results above that our model performed well with the
 new data.
