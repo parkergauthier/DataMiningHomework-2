@@ -169,9 +169,9 @@ RMSE(sara_pred, saratoga_test$price)
 ```
 
 
-Now that we have various scores for different builds of linear models, let us see how these compare to our KNN model.
+  Now that we have various scores for different builds of linear models, let us see how these compare to our KNN model.
 
-For our KNN model, we will optimize k and will initiate a similar loop to determine the average out-of-sample performance of our model.
+  For our KNN model, we will optimize k and will initiate a similar loop to determine the average out-of-sample performance of our model.
 
 *The RMSE for the KNN model:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
@@ -251,7 +251,7 @@ rmse_knn
 ```
 
 
-It would appear that our linear models, particularly our Lasso model outperforms our KNN model. To optimally predict price, we should build a linear model using Lasso regularization. 
+  It would appear that our linear models, particularly our Lasso model outperforms our KNN model. To optimally predict price, we should build a linear model using Lasso regularization. 
 
 
 ## 3.) Classification and retrospective sampling
@@ -261,7 +261,7 @@ credit = read.csv(here("data/german_credit.csv"))
 
 ### Ploting probability of default
 
-To begin this analysis, we will take a look at the likelihood that one will default based solely on their credit history.  Particularly, we will be looking at the probability that one defaults given their history:
+  To begin this analysis, we will take a look at the likelihood that one will default based solely on their credit history.  Particularly, we will be looking at the probability that one defaults given their history:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
 counts = addmargins(table(credit$Default, credit$history))
@@ -281,11 +281,11 @@ frame_ %>%
   theme_igray() +
   theme(legend.position = "none")
 ```
-The plot above suggests that the probability of defaulting goes DOWN with worse credit history.  It does not take much to infer that something is amiss with our data set.
+  The plot above suggests that the probability of defaulting goes DOWN with worse credit history.  It does not take much to infer that something is amiss with our data set.
 
 
 ### Making a predictive model
-Despite the red-flags from the plot above, it may be useful to see how well we can predict a default within our data set.  We will begin this process by splitting the data into a training and testing set.  We will then use a logistic model to determine the probability that one will default on their loan then test its out of sample performance.
+  The red-flags from the plot above may be exaggerated by building a predictive model.  We will begin this process by splitting the data into a training and testing set.  We will then use a logistic model to help us determine the probability that one will default on their loan.
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 ##Splitting data to test out of sample preformance
 credit_split = initial_split(credit, prop = .8)
@@ -293,51 +293,18 @@ credit_train = training(credit_split)
 credit_test = testing(credit_split)
 ```
 
-Below is a table displaying how well our logistic model predicts if one will default within our training set.  If the probability of defaulting is over 50% the model predicts they will default.
+The coefficients for our logistic model:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
 ##building a predicitive model and checking its performance 
 lm_credit = glm(Default ~ duration + amount + installment + age + history + purpose + foreign, data=credit_train, family = "binomial")
-pred_train = predict(lm_credit, credit_train)
-yhat_train = ifelse(pred_train > .5, 1,0)
-confusion = table(y=credit_train$Default, yhat = yhat_train)
-confusion
-```
-*Percentage of correct predictions
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-sum(diag(confusion)/sum(confusion)) * 100
+
+coef(lm_credit)
 ```
 
+  As seen above, holding all else fixed, the magnitude of the coefficients do not explicitly tell us the odds that one will default given credit history. However, the signs suggest that poor and terrible history has less of a chance of defaulting than good.
 
-This table shows our out-of-sample performance using our trained model
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-pred_test = predict(lm_credit, credit_test)
-yhat_test = ifelse(pred_test > .5, 1, 0)
-confusion_test = table(y=credit_test$Default, yhat = yhat_test)
-confusion_test
-```
-
-*Percentage of correct predictions
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-sum(diag(confusion_test)/sum(confusion_test)) * 100
-```
-
-
-Below shows the actual distribution of defaults in our dataset.  If we were to use a model that guessed 0 for every individual, it would have perform with a 70% success rate.
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-#Testing a null model that only predicts 0
-table(credit$Default)
-null_tab = table(credit$Default)
-```
-
-*Success rate
-```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-
-700/sum(table(credit$Default)) * 100
-
-```
-
-The results above show that the method for collecting this data is quite clearly flawed.  This data set seems to suggest that those with 'terrible' credit history are just as likely to default on a loan as those with 'good' credit history.  This does not make any intuitive sense and is likely the result of improper sampling.  Moreover, it dismisses any predictive power of a logistic model to data outside of this sample (which has none considering a null-model that predicts default for every individual). If the bank tried to build a model using random sampling, they would likely be able to build a better predictive model regarding rates of default.
+  These results show that the method for collecting this data is quite clearly flawed.  This data set seems to suggest that those with 'terrible' credit history are just as likely to default on a loan as those with 'good' credit history.  This does not make any intuitive sense and is likely the result of improper sampling.  Moreover, it dismisses any predictive power of a logistic model to data outside of this sample. If the bank tried to build a model using random sampling, they would likely be able to build a better predictive model regarding rates of default.
 
 
 ## 4.) Children and Hotel Reservations
